@@ -12,7 +12,7 @@ def hello(request):
 
 def tweetList(request):
     tweets = tweet.objects.all().order_by("-created_at")
-    return render(request, "tweetList.html", {"tweet": tweets})
+    return render(request, "tweetList.html", {"tweets": tweets})
 
 
 def tweet_create(request):
@@ -26,3 +26,25 @@ def tweet_create(request):
     else:
         form = TweetForm()
         return render(request, "tweet_form.html", {"form": form})
+
+
+def tweet_edit(request, tweet_id):
+    tweets = get_object_or_404(tweet, pk=tweet_id, user=request.user)
+    if request.method == "POST":
+        form = TweetForm(request.POST, request.FILES, instance=tweet)
+        if form.is_valid():
+            tweets = form.save(commit=False)
+            tweets.user = request.user
+            tweets.save()
+            return redirect("tweetList")
+    else:
+        form = TweetForm(instance=tweet)
+    return render(request, "tweet_form.html", {"form": form})
+
+
+def tweet_delete(request, tweet_id):
+    tweets = get_object_or_404(tweet, pk=tweet_id, user=request.user)
+    if request.method == "POST":
+        tweets.delete()
+        return redirect("tweetList")
+    return render(request, "tweet_confirm_delete.html", {"tweet": tweets})
